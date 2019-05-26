@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Kart Assignment Randomizer</title>
+</head>
+
+<style>
+button {
+  width: 100px;
+  height: 50px;
+}
+ol {
+  width: 75%;
+}
+textarea {
+  width: 200px;
+  height: 400px;
+  white-space: pre-wrap;
+  overflow: auto;
+}
+</style>
+
+<script>
+function rand(min, maxplus1) {
+  return Math.floor(Math.random() * (+maxplus1 - +min)) + +min;
+}
+
+function ensureRandom() {
+  var nIterations = 2000;
+  var nBuckets = 10;
+  console.assert(nIterations/nBuckets >= 2*nBuckets);
+
+  var buckets = new Array(nBuckets);
+  for(var i=0; i<buckets.length; ++i) {
+    buckets[i] = 0;
+  }
+
+  // This should produce a mostly uniform distribution
+  for(var i=0; i<nIterations; ++i) {
+    ++buckets[rand(0, buckets.length)];
+  }
+
+  console.log("Randomization Test Results:");
+  for(var i=0; i<buckets.length; ++i) {
+    console.log("  Rand[" + i + "]: " + buckets[i]);
+  }
+
+  var RAND_FACTOR = 1.5;
+  for(var i=0; i<buckets.length; ++i) {
+    if(buckets[i] > RAND_FACTOR*nIterations/buckets.length ||
+       buckets[i] < nIterations/buckets.length/RAND_FACTOR) {
+      console.warn("Bucket " + i + " fails test!");
+      alert("Randomization test failed!");
+      return;
+    }
+  }
+}
+
+function validateSource(array) {
+  if(array.length == 1) {
+    if(array[0].length == 0)
+      alert('Kart list is empty.');
+    else
+      alert('Cannot randomize only 1 kart without a duplicate for race sesion.');
+    return false;
+  }
+
+  var set = new Set(array);
+  if(set.size != array.length) {
+    alert('Duplicate kart!');
+    return false;
+  }
+
+  return true;
+}
+
+function chooseRandomElement(array) {
+  var candidateString = '';
+
+  for(var i=0; i<array.length; ++i) {
+    candidateString += array[i];
+    if(i < array.length-1)
+      candidateString += ',';
+  }
+
+  var randIdx = rand(0, array.length);
+
+  console.log("Chose " + array[randIdx] + " from candidates: " + candidateString);
+  return array[randIdx];
+}
+
+function randomize(src, dst) {
+  var x = document.getElementById(src).value;
+  x = x.replace(/(\r\n|\n|\r)$/gm, ''); // Remove empty lines if present
+
+  var lines = x.split('\n');
+  if(!validateSource(lines)) return;
+
+
+  var randomizedSet = new Set(); // Insertion order is maintained
+  if(dst == 'qual') { // Blindly randomize
+    // Make "re-randomizing" multiple times to achieve a desired kart assignment
+    // just a little bit more inconvenient by requiring a page reload (which
+    // requires filling out the form(s) again).
+    document.getElementById('rand_qual').disabled = true;
+
+    console.log("Randomizing for qualification");
+    var srcSet = new Set(lines);
+    for(var i=0; i < lines.length; ++i) {
+      var chosen = chooseRandomElement(Array.from(srcSet));
+      srcSet.delete(chosen);
+      randomizedSet.add(chosen);
+    }
+  } else { // Race kart cannot be duplicate of qualification kart
+    // Make "re-randomizing" multiple times to achieve a desired kart assignment
+    // just a little bit more inconvenient by requiring a page reload (which
+    // requires filling out the form(s) again).
+    document.getElementById('rand_race').disabled = true;
+
+    console.log("Randomizing for race");
+    var candidates = new Set(lines);
+
+    for(var i=0; i < lines.length-2; ++i) {
+      candidates.delete(lines[i]);
+
+      var chosen = chooseRandomElement(Array.from(candidates));
+      randomizedSet.add(chosen);
+      candidates.delete(chosen);
+
+      if(!randomizedSet.has(lines[i])) { // Possibly from a previous selection
+        candidates.add(lines[i]);
+      }
+    }
+
+    // Assign the last two based on no-reuse constraint
+    candidates = Array.from(candidates);
+    if(candidates[0] == lines[lines.length-2]) {
+      randomizedSet.add(candidates[1]);
+      randomizedSet.add(candidates[0]);
+    } else {
+      randomizedSet.add(candidates[0]);
+      randomizedSet.add(candidates[1]);
+    }
+  }
+
+
+  document.getElementById(dst).innerHTML = '';
+  document.getElementById('race').innerHTML = '';
+  randomized = Array.from(randomizedSet);
+  for(var i=0; i<randomized.length; ++i) {
+    document.getElementById(dst).innerHTML += randomized[i];
+    if(i<randomized.length-1)
+      document.getElementById(dst).innerHTML += '\n';
+  }
+}
+</script>
+
+
+<body onload="ensureRandom()">
+  <h1>Kart Assignment Randomizer</h1>
+  The Kart Assignment Randomizer provides kart number assignments for each racer. The kart assignment for the race will be different than the assignment for qualification.
+  <p>Directions:</p>
+  <ol>
+   <li>Add the available kart numbers to the form labeled "Pool of Karts". Order does not matter. There should be one kart number per line, and each line should contain a unique kart number. It's ok to have more karts than teams; just ignore the bottommost assignments after randomization.</li><br>
+    <li>Optionally add team or racer names to the form labeled "Team Name". This allows you to keep track of which team/individiual corresponds to which line number in the subsequent forms.</li><br>
+    <li>Press the first "Randomize" button to get kart assignments for quailfication. Each line will contain a randomly chosen kart from the pool.</li><br>
+    <li>Press the second "Randomize" button to get kart assignments for the race. The karts will be randomized again, but no team will be assigned the same kart from qualification.</li>
+  </ol>
+  <br><br>
+<table>
+<tr>
+  <th>Pool of Karts</th>
+  <th>Team Name (optional)</th>
+  <th>
+  <th>Qualification</th>
+  <th></th>
+  <th>Race</th>
+</tr>
+<tr>
+  <td>
+    <textarea id="pool"></textarea>
+  </td>
+  <td>
+    <textarea id="teamnames"></textarea>
+  </td>
+  <td>
+    <button id="rand_qual" onclick="randomize('pool', 'qual')">Randomize -></button>
+  </td>
+  <td>
+    <textarea id="qual" readonly="true"></textarea>
+  </td>
+  <td>
+    <button id="rand_race" onclick="randomize('qual', 'race')">Randomize -></button>
+  </td>
+  <td>
+    <textarea id="race" readonly="true"></textarea>
+  </td>
+</tr>
+</table>
+<br><br>
+
+<small>Right click on any of the whitespace on the page and select "View Page Source" to view the randomization code.</small>
+</body>
+</html>
