@@ -107,6 +107,18 @@
     return array[randIdx];
   }
 
+  function escapeHtml(text) {
+    var map = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    };
+
+    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+  }
+
   var namesRendered = false;
   function renderNames() {
     if(namesRendered){ //blocks ability to change name after first randomization
@@ -115,8 +127,9 @@
 
     var teamnames = document.getElementById("teamnames").value;
     teamnames = teamnames.replace(/(\r\n|\n|\r)$/gm, ''); // Remove empty lines if present
-    teamnames = teamnames.replace(/\n/g, "<br/>");
+    teamnames = escapeHtml(teamnames);
     teamnames = teamnames.replace(/ /g, "&nbsp;");
+    teamnames = teamnames.replace(/\n/g, "<br/>");
 
     var namesTds = document.getElementsByClassName("names");
     for (const td of namesTds) {
