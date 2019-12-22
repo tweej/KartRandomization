@@ -10,7 +10,7 @@
     font-size: 14px;
     font-family: arial,sans-serif;
   }
-  button {
+  .randomizebutton {
     width: 100px;
     height: 50px;
   }
@@ -204,6 +204,18 @@
         document.getElementById(dst).innerHTML += '\n';
     }
   }
+
+  function resizeText(multiplier) {
+    var textareaList = Array.from(document.getElementById('randomizationTables').getElementsByTagName('textarea'));
+    var namesList = Array.from(document.getElementsByClassName('names'));
+    var resizeableList = textareaList.concat(namesList);
+    for(var i = 0; i < resizeableList.length; i++) {
+      if(resizeableList[i].style.fontSize == "") {
+        resizeableList[i].style.fontSize = "1.0em";
+      }
+      resizeableList[i].style.fontSize = parseFloat(resizeableList[i].style.fontSize) + (multiplier * 0.2) + "em";
+    }
+  }
 </script>
 
 
@@ -217,8 +229,10 @@ The Kart Assignment Randomizer provides kart number assignments for each racer. 
   <li>Press the first "Randomize" button to get kart assignments for quailfication. Each line will contain a randomly chosen kart from the pool.</li><br>
   <li>Press the second "Randomize" button to get kart assignments for the race. The karts will be randomized again, but no team will be assigned the same kart from qualification.</li>
 </ol>
+<br>
+Font Size: <button onclick="resizeText(1)">+</button><button onclick="resizeText(-1)">-</button>
 <br><br>
-<table>
+<table id="randomizationTables">
   <tr>
     <th>Pool of Karts</th>
     <th>Team Name (optional)</th>
@@ -237,7 +251,7 @@ The Kart Assignment Randomizer provides kart number assignments for each racer. 
       <textarea id="teamnames"></textarea>
     </td>
     <td>
-      <button id="rand_qual" onclick="randomize('pool', 'qual')">Randomize -></button>
+      <button id="rand_qual" class="randomizebutton" onclick="randomize('pool', 'qual')">Randomize -></button>
     </td>
     <td valign="top" align="right" class="names">
     </td>
@@ -245,7 +259,7 @@ The Kart Assignment Randomizer provides kart number assignments for each racer. 
       <textarea id="qual" readonly="true"></textarea>
     </td>
     <td>
-      <button id="rand_race" onclick="randomize('qual', 'race')">Randomize -></button>
+      <button id="rand_race" class="randomizebutton" onclick="randomize('qual', 'race')">Randomize -></button>
     </td>
     <td valign="top" align="right" class="names">
     </td>
